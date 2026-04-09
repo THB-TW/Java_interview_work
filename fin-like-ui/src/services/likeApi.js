@@ -5,6 +5,11 @@ export const getLikes = (userId) =>
     params: { userId }
   })
 
+export const getLikesPaged = (userId, params) =>
+  api.get('/likes/paged', {
+    params: { userId, ...params }
+  })
+
 export const addLike = (payload) =>
   api.post('/likes', payload)
 
@@ -16,4 +21,4 @@ export const deleteLike = (id, userId) =>
     params: { userId }
   })
 
-export const getAllProducts = () => api.get('/products')
+export const getAllProducts = () => api.get('/products')

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -29,7 +30,7 @@ public class LikeRepository {
         jdbcTemplate.update(sql, userId, productNo, purchaseQuantity, account);
     }
 
-    //呼叫 sp_get_like_list 查詢
+    //呼叫 sp_get_like_list 查詢（原有功能保留）
     public List<LikeResponse> getLikeList(String userId) {
         String sql = "CALL sp_get_like_list(?)";
         log.debug("Calling sp_get_like_list: userId={}", userId);
@@ -58,18 +59,91 @@ public class LikeRepository {
         return count != null && count > 0;
     }
 
-    // RowMapper for sp_get_like_list(SP 只回傳 5 個欄位)
+    /**
+     * 分頁查詢喜好清單（含篩選、JOIN users 取得 email）
+     *
+     * @param userId    必填
+     * @param productNo 可選篩選（商品編號）
+     * @param account   可選篩選（扣款帳號，模糊搜尋）
+     * @param page      0-based 頁碼
+     * @param size      每頁筆數
+     */
+    public List<LikeResponse> getLikesPaged(String userId, Long productNo, String account, int page, int size) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT l.sn, l.product_no, l.purchase_quantity, l.account, " +
+            "l.total_fee, l.total_amount, u.email " +
+            "FROM like_list l " +
+            "JOIN users u ON l.user_id = u.user_id " +
+            "WHERE l.user_id = ? "
+        );
+        List<Object> params = new ArrayList<>();
+        params.add(userId);
+
+        if (productNo != null && productNo > 0) {
+            sql.append("AND l.product_no = ? ");
+            params.add(productNo);
+        }
+        if (account != null && !account.trim().isEmpty()) {
+            sql.append("AND l.account LIKE ? ");
+            params.add("%" + account.trim() + "%");
+        }
+
+        sql.append("ORDER BY l.sn LIMIT ? OFFSET ?");
+        params.add(size);
+        params.add((long) page * size);
+
+        log.debug("getLikesPaged: userId={}, productNo={}, account={}, page={}, size={}", userId, productNo, account, page, size);
+        return jdbcTemplate.query(sql.toString(), new LikePagedRowMapper(), params.toArray());
+    }
+
+    /** 計算分頁查詢的總筆數 */
+    public long countLikes(String userId, Long productNo, String account) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(*) FROM like_list l WHERE l.user_id = ? "
+        );
+        List<Object> params = new ArrayList<>();
+        params.add(userId);
+
+        if (productNo != null && productNo > 0) {
+            sql.append("AND l.product_no = ? ");
+            params.add(productNo);
+        }
+        if (account != null && !account.trim().isEmpty()) {
+            sql.append("AND l.account LIKE ? ");
+            params.add("%" + account.trim() + "%");
+        }
+
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
+        return count != null ? count : 0L;
+    }
+
+    // RowMapper for sp_get_like_list（原有 SP 回傳，無 email）
     private static class LikeRowMapper implements RowMapper<LikeResponse> {
-        //轉換資料對應的DTO
         @Override
         public LikeResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
             LikeResponse dto = new LikeResponse();
-            dto.setSn(rs.getLong("sn")); //抓DB值
+            dto.setSn(rs.getLong("sn"));
             dto.setProductNo(rs.getLong("product_no"));
             dto.setPurchaseQuantity(rs.getInt("purchase_quantity"));
             dto.setAccount(rs.getString("account"));
             dto.setTotalFee(rs.getBigDecimal("total_fee"));
             dto.setTotalAmount(rs.getBigDecimal("total_amount"));
+            return dto;
+        }
+    }
+
+    // RowMapper for 分頁查詢（含 email JOIN）
+    private static class LikePagedRowMapper implements RowMapper<LikeResponse> {
+        @Override
+        public LikeResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+            LikeResponse dto = new LikeResponse();
+            dto.setSn(rs.getLong("sn"));
+            dto.setProductNo(rs.getLong("product_no"));
+            dto.setPurchaseQuantity(rs.getInt("purchase_quantity"));
+            dto.setAccount(rs.getString("account"));
+            dto.setTotalFee(rs.getBigDecimal("total_fee"));
+            dto.setTotalAmount(rs.getBigDecimal("total_amount"));
+            dto.setEmail(rs.getString("email"));
             return dto;
         }
     }

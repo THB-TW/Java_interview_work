@@ -3,6 +3,7 @@ package com.fin.like.service;
 import com.fin.like.common.exception.BusinessException;
 import com.fin.like.dto.LikeRequest;
 import com.fin.like.dto.LikeResponse;
+import com.fin.like.dto.PagedResult;
 import com.fin.like.repository.LikeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,17 @@ public class LikeService {
     public List<LikeResponse> getLikeList(String userId) {
         validateUserId(userId);
         return likeRepository.getLikeList(userId);
+    }
+
+    /** 分頁查詢喜好清單（含篩選） */
+    public PagedResult<LikeResponse> getLikesPaged(String userId, Long productNo, String account, int page, int size) {
+        validateUserId(userId);
+        if (page < 0) page = 0;
+        if (size <= 0) size = 10;
+
+        List<LikeResponse> data = likeRepository.getLikesPaged(userId, productNo, account, page, size);
+        long total = likeRepository.countLikes(userId, productNo, account);
+        return new PagedResult<>(data, page, size, total);
     }
 
     @Transactional
