@@ -82,7 +82,6 @@
 | Maven | 建置工具 |
 | JdbcTemplate | 資料存取（搭配 Stored Procedure） |
 | MariaDB | 關聯式資料庫 |
-| `@Transactional` | 多資料表操作的一致性保護 |
 
 ### 前端
 
@@ -393,21 +392,17 @@ jdbcTemplate.update(sql, userId, productNo, purchaseQuantity, account);
 
 ---
 
-## 未來可擴充方向
+## 可擴充方向
 
 - **引入 Spring Security**：加入 JWT 驗證機制，保護 API 端點
 - **使用者登入 / 登出**：結合 `users` 資料表實作完整的身份驗證流程
 - **分頁查詢**：對喜好清單加入分頁（Pagination）與排序功能
-- **單元測試 / 整合測試**：使用 JUnit 5 + Mockito 撰寫 Service 層與 Repository 層測試
 - **容器化部署**：以 Docker Compose 同時管理後端、前端與 MariaDB 服務
-- **API 文件化**：整合 Springdoc OpenAPI（Swagger UI）自動產生 API 文件
 - **前端路由**：使用 Vue Router 分離查詢、新增等功能至不同頁面
-- **錯誤碼定義**：建立完整的錯誤碼列舉（Error Code Enum），提供更明確的錯誤回應
 
 ---
 
 ## 開發者
 
-- **姓名**：（請填入你的姓名）
+- **姓名**：陳翰陞
 - **GitHub**：[THB-TW/Java_interview_work](https://github.com/THB-TW/Java_interview_work)
-- **聯絡信箱**：（請填入你的 Email）
