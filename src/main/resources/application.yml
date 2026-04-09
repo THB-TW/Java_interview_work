@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/fin_like_system?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Taipei
+    username: root
+    password: 123  #password
+    driver-class-name: org.mariadb.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    com.fin.like: DEBUG
+    org.springframework.jdbc: DEBUG
